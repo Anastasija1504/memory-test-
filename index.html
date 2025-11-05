@@ -65,6 +65,12 @@
   }
   .correct { color: #00ffb3; }
   .wrong { color: #ff4c4c; }
+  #hint {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 16px;
+    margin-top: -5px;
+  }
 </style>
 </head>
 <body>
@@ -80,7 +86,8 @@
     <div id="level" style="display:none;">
       <h2 id="levelInfo"></h2>
       <div id="number"></div>
-      <input id="answer" type="text" placeholder="Введи цифри у зворотному порядку" disabled>
+      <div id="hint">🔁 Вводь у зворотному порядку!</div>
+      <input id="answer" type="text" placeholder="Тут твоя відповідь" disabled>
       <br>
       <button id="submitBtn" disabled>Відповісти</button>
       <div id="feedback"></div>
@@ -124,7 +131,8 @@ async function startLevel() {
   document.getElementById("submitBtn").disabled = true;
 
   currentNumber = generateNumber(currentLevel + 2);
-  await showNumbersSequentially(currentNumber);
+  const reversedNumber = currentNumber.split("").reverse().join(""); // показуємо у зворотньому порядку
+  await showNumbersSequentially(reversedNumber);
 
   // після показу всіх цифр — дозволяємо вводити
   document.getElementById("answer").disabled = false;
@@ -165,7 +173,7 @@ function showNumbersSequentially(numberString) {
 
 function checkAnswer() {
   const userAnswer = document.getElementById("answer").value.trim();
-  const correctAnswer = currentNumber.split("").reverse().join("");
+  const correctAnswer = currentNumber; // правильна — оригінальний порядок
   const feedback = document.getElementById("feedback");
 
   if (userAnswer === correctAnswer) {
