@@ -175,12 +175,15 @@
     }
 
     function endGame() {
-      display.innerHTML = "✅<br><span style='font-size:1.5em;'>Тест завершено!</span>";
+      display.innerHTML = `
+        ✅<br>
+        <span style='font-size:1.5em;'>Тест завершено!</span><br>
+        <span style='font-size:1.3em; color: #00ffcc;'>Результат: ${correctCount} з ${totalAttempts} правильних відповідей</span>
+      `;
       answerInput.disabled = true;
       submitBtn.disabled = true;
       gameControls.style.display = "none";
-      status.style.color = "red";
-      status.textContent = `Результат: ${correctCount} з ${totalAttempts} правильних відповідей`;
+      status.textContent = "";
 
       sendResult(nameInput.value, correctCount);
     }
