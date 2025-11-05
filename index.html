@@ -20,7 +20,7 @@
     }
 
     h1 {
-      font-size: clamp(20px, 4vw, 40px);
+      font-size: clamp(22px, 4vw, 42px);
       margin-bottom: 20px;
     }
 
@@ -69,8 +69,7 @@
   <h1>🧠 Тест на пам’ять</h1>
 
   <div id="setup">
-    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" /><br>
-    <input type="number" id="levelCount" placeholder="Кількість рівнів" min="1" max="20" /><br>
+    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" />
     <button onclick="startGame()">Почати</button>
   </div>
 
@@ -86,26 +85,24 @@
     let playerName = "";
     let score = 0;
     let level = 1;
-    let maxLevel = 3;
+    let attempt = 1;
+    const maxLevel = 5;
+    const maxAttempts = 3;
     let currentSequence = [];
 
     function startGame() {
       playerName = document.getElementById("playerName").value.trim();
-      maxLevel = parseInt(document.getElementById("levelCount").value);
-
       if (!playerName) return alert("Будь ласка, введіть ім’я!");
-      if (!maxLevel || maxLevel < 1) return alert("Вкажіть кількість рівнів (мінімум 1)!");
-
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("game").classList.remove("hidden");
-
       score = 0;
       level = 1;
+      attempt = 1;
       playLevel();
     }
 
     async function playLevel() {
-      document.getElementById("result").innerText = `Рівень ${level} із ${maxLevel}`;
+      document.getElementById("result").innerText = `Рівень ${level} (спроба ${attempt} із ${maxAttempts})`;
       const numCount = 3 + level;
       currentSequence = Array.from({ length: numCount }, () => Math.floor(Math.random() * 10));
 
@@ -137,13 +134,17 @@
 
       if (userAnswer === correctAnswer) {
         score++;
-        resultDiv.innerText = `✅ Правильно! (${score}/${level})`;
+        resultDiv.innerText = `✅ Правильно!`;
       } else {
         resultDiv.innerText = `❌ Неправильно! Правильна відповідь: ${correctAnswer}`;
       }
 
-      level++;
-      if (level <= maxLevel) {
+      if (attempt < maxAttempts) {
+        attempt++;
+        setTimeout(playLevel, 1500);
+      } else if (level < maxLevel) {
+        level++;
+        attempt = 1;
         setTimeout(playLevel, 1500);
       } else {
         finishGame();
@@ -155,13 +156,15 @@
       document.getElementById("answer").classList.add("hidden");
       document.getElementById("submitBtn").classList.add("hidden");
 
-      const percent = Math.round((score / maxLevel) * 100);
+      const totalAttempts = maxLevel * maxAttempts;
+      const percent = Math.round((score / totalAttempts) * 100);
+
       document.getElementById("result").innerText =
-        `🏁 Гру завершено! Результат: ${score}/${maxLevel} (${percent}%)`;
+        `🏁 Гру завершено! Результат: ${score}/${totalAttempts} (${percent}%)`;
 
       fetch(scriptURL, {
         method: "POST",
-        body: JSON.stringify({ name: playerName, score: `${score}/${maxLevel} (${percent}%)` }),
+        body: JSON.stringify({ name: playerName, score: `${score}/${totalAttempts} (${percent}%)` }),
         headers: { "Content-Type": "application/json" }
       }).catch(err => console.error("Помилка відправлення:", err));
     }
