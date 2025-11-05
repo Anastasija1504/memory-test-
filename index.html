@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Тест на пам'ять</title>
+  <title>Тест на пам’ять</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -67,8 +67,10 @@
 </head>
 <body>
   <h1>🧠 Тест на пам’ять</h1>
+
   <div id="setup">
-    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" />
+    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" /><br>
+    <input type="number" id="levelCount" placeholder="Кількість рівнів" min="1" max="20" /><br>
     <button onclick="startGame()">Почати</button>
   </div>
 
@@ -84,14 +86,19 @@
     let playerName = "";
     let score = 0;
     let level = 1;
+    let maxLevel = 3;
     let currentSequence = [];
-    const maxLevel = 3;
 
     function startGame() {
       playerName = document.getElementById("playerName").value.trim();
+      maxLevel = parseInt(document.getElementById("levelCount").value);
+
       if (!playerName) return alert("Будь ласка, введіть ім’я!");
+      if (!maxLevel || maxLevel < 1) return alert("Вкажіть кількість рівнів (мінімум 1)!");
+
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("game").classList.remove("hidden");
+
       score = 0;
       level = 1;
       playLevel();
@@ -99,8 +106,9 @@
 
     async function playLevel() {
       document.getElementById("result").innerText = `Рівень ${level} із ${maxLevel}`;
-      const numCount = 3 + level; 
+      const numCount = 3 + level;
       currentSequence = Array.from({ length: numCount }, () => Math.floor(Math.random() * 10));
+
       const numberDiv = document.getElementById("number");
       const answerInput = document.getElementById("answer");
       const submitBtn = document.getElementById("submitBtn");
@@ -109,11 +117,12 @@
       submitBtn.classList.add("hidden");
       answerInput.value = "";
 
+      // показуємо цифри по одній
       for (let i = 0; i < currentSequence.length; i++) {
         numberDiv.innerText = currentSequence[i];
-        await new Promise(r => setTimeout(r, 1000)); 
+        await new Promise(r => setTimeout(r, 1000));
         numberDiv.innerText = "";
-        await new Promise(r => setTimeout(r, 300)); 
+        await new Promise(r => setTimeout(r, 300));
       }
 
       answerInput.classList.remove("hidden");
@@ -128,7 +137,7 @@
 
       if (userAnswer === correctAnswer) {
         score++;
-        resultDiv.innerText = `✅ Правильно! Рахунок: ${score}`;
+        resultDiv.innerText = `✅ Правильно! (${score}/${level})`;
       } else {
         resultDiv.innerText = `❌ Неправильно! Правильна відповідь: ${correctAnswer}`;
       }
@@ -145,11 +154,14 @@
       document.getElementById("number").innerText = "";
       document.getElementById("answer").classList.add("hidden");
       document.getElementById("submitBtn").classList.add("hidden");
-      document.getElementById("result").innerText = `🏁 Гру завершено! Ваш рахунок: ${score}/${maxLevel}`;
+
+      const percent = Math.round((score / maxLevel) * 100);
+      document.getElementById("result").innerText =
+        `🏁 Гру завершено! Результат: ${score}/${maxLevel} (${percent}%)`;
 
       fetch(scriptURL, {
         method: "POST",
-        body: JSON.stringify({ name: playerName, score: score }),
+        body: JSON.stringify({ name: playerName, score: `${score}/${maxLevel} (${percent}%)` }),
         headers: { "Content-Type": "application/json" }
       }).catch(err => console.error("Помилка відправлення:", err));
     }
