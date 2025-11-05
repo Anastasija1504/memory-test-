@@ -1,173 +1,171 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Тест на пам’ять</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #6e8efb, #a777e3);
-      color: white;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      padding: 10px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест на пам’ять</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #5b86e5, #36d1dc);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 
-    h1 {
-      font-size: clamp(22px, 4vw, 42px);
-      margin-bottom: 20px;
-    }
+  #game {
+    max-width: 500px;
+    margin: auto;
+    background: rgba(0,0,0,0.2);
+    padding: 20px;
+    border-radius: 20px;
+  }
 
-    input, button {
-      font-size: clamp(16px, 3vw, 24px);
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      margin: 10px;
-      outline: none;
-    }
+  input, button {
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    margin: 10px;
+  }
 
-    input {
-      width: clamp(150px, 60vw, 400px);
-    }
+  input {
+    width: 80%;
+    text-align: center;
+  }
 
-    button {
-      background: #fff;
-      color: #6e8efb;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+  button {
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
 
-    button:hover {
-      background: #6e8efb;
-      color: white;
-    }
+  button:hover {
+    background: #f0f0f0;
+  }
 
-    #number {
-      font-size: clamp(40px, 10vw, 120px);
-      font-weight: bold;
-      margin: 20px;
-    }
+  #number {
+    font-size: 48px;
+    font-weight: bold;
+    margin: 20px 0;
+  }
 
-    #result {
-      font-size: clamp(16px, 2.5vw, 22px);
-      margin-top: 10px;
-    }
-
-    .hidden {
-      display: none;
-    }
-  </style>
+  @media (max-width: 600px) {
+    #number { font-size: 36px; }
+    input, button { font-size: 14px; }
+  }
+</style>
 </head>
 <body>
-  <h1>🧠 Тест на пам’ять</h1>
+  <div id="game">
+    <h1>Тест на пам’ять</h1>
+    <div id="intro">
+      <p>Введи своє ім’я:</p>
+      <input type="text" id="username" placeholder="Твоє ім’я">
+      <br>
+      <button id="startBtn">Почати</button>
+    </div>
 
-  <div id="setup">
-    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" />
-    <button onclick="startGame()">Почати</button>
+    <div id="level" style="display:none;">
+      <h2 id="levelInfo"></h2>
+      <div id="number"></div>
+      <input id="answer" type="text" placeholder="Введи цифри у зворотньому порядку" disabled>
+      <br>
+      <button id="submitBtn" disabled>Відповісти</button>
+    </div>
+
+    <div id="result" style="display:none;"></div>
   </div>
 
-  <div id="game" class="hidden">
-    <div id="number"></div>
-    <input type="text" id="answer" class="hidden" placeholder="Введіть цифри у зворотньому порядку" />
-    <button id="submitBtn" class="hidden" onclick="checkAnswer()">Перевірити</button>
-    <div id="result"></div>
-  </div>
+<script>
+const totalLevels = 5;
+const attemptsPerLevel = 3;
+let currentLevel = 1;
+let currentAttempt = 1;
+let score = 0;
+let totalAttempts = totalLevels * attemptsPerLevel;
+let currentNumber = "";
+let username = "";
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxjlryvmhZq3VreJu3xTMbLgGUhWJq6gZQQtMtFQ2fvBFFk9eMTCGNppII3zO30SM7CZA/exec";
-    let playerName = "";
-    let score = 0;
-    let level = 1;
-    let attempt = 1;
-    const maxLevel = 5;
-    const maxAttempts = 3;
-    let currentSequence = [];
+document.getElementById("startBtn").onclick = startGame;
+document.getElementById("submitBtn").onclick = checkAnswer;
 
-    function startGame() {
-      playerName = document.getElementById("playerName").value.trim();
-      if (!playerName) return alert("Будь ласка, введіть ім’я!");
-      document.getElementById("setup").classList.add("hidden");
-      document.getElementById("game").classList.remove("hidden");
-      score = 0;
-      level = 1;
-      attempt = 1;
-      playLevel();
+function startGame() {
+  username = document.getElementById("username").value.trim();
+  if (!username) {
+    alert("Будь ласка, введи ім’я!");
+    return;
+  }
+  document.getElementById("intro").style.display = "none";
+  document.getElementById("level").style.display = "block";
+  startLevel();
+}
+
+function startLevel() {
+  document.getElementById("levelInfo").textContent = 
+    `Рівень ${currentLevel} — спроба ${currentAttempt} із ${attemptsPerLevel}`;
+  document.getElementById("answer").value = "";
+  document.getElementById("answer").disabled = true;
+  document.getElementById("submitBtn").disabled = true;
+  showSequence();
+}
+
+function showSequence() {
+  const digitsCount = 3 + currentLevel - 1;
+  let sequence = [];
+  for (let i = 0; i < digitsCount; i++) {
+    sequence.push(Math.floor(Math.random() * 10));
+  }
+  currentNumber = sequence.join("");
+  const numberDiv = document.getElementById("number");
+
+  let i = 0;
+  numberDiv.textContent = "";
+  const interval = setInterval(() => {
+    if (i < sequence.length) {
+      numberDiv.textContent = sequence[i];
+      i++;
+    } else {
+      clearInterval(interval);
+      numberDiv.textContent = "";
+      document.getElementById("answer").disabled = false;
+      document.getElementById("submitBtn").disabled = false;
+      document.getElementById("answer").focus();
     }
+  }, 800);
+}
 
-    async function playLevel() {
-      document.getElementById("result").innerText = `Рівень ${level} (спроба ${attempt} із ${maxAttempts})`;
-      const numCount = 3 + level;
-      currentSequence = Array.from({ length: numCount }, () => Math.floor(Math.random() * 10));
+function checkAnswer() {
+  const userAnswer = document.getElementById("answer").value.trim();
+  const correctAnswer = currentNumber.split("").reverse().join("");
+  if (userAnswer === correctAnswer) score++;
 
-      const numberDiv = document.getElementById("number");
-      const answerInput = document.getElementById("answer");
-      const submitBtn = document.getElementById("submitBtn");
+  if (currentAttempt < attemptsPerLevel) {
+    currentAttempt++;
+    startLevel();
+  } else if (currentLevel < totalLevels) {
+    currentLevel++;
+    currentAttempt = 1;
+    startLevel();
+  } else {
+    showResults();
+  }
+}
 
-      answerInput.classList.add("hidden");
-      submitBtn.classList.add("hidden");
-      answerInput.value = "";
-
-      // показуємо цифри по одній
-      for (let i = 0; i < currentSequence.length; i++) {
-        numberDiv.innerText = currentSequence[i];
-        await new Promise(r => setTimeout(r, 1000));
-        numberDiv.innerText = "";
-        await new Promise(r => setTimeout(r, 300));
-      }
-
-      answerInput.classList.remove("hidden");
-      submitBtn.classList.remove("hidden");
-      answerInput.focus();
-    }
-
-    function checkAnswer() {
-      const userAnswer = document.getElementById("answer").value.trim();
-      const correctAnswer = currentSequence.slice().reverse().join("");
-      const resultDiv = document.getElementById("result");
-
-      if (userAnswer === correctAnswer) {
-        score++;
-        resultDiv.innerText = `✅ Правильно!`;
-      } else {
-        resultDiv.innerText = `❌ Неправильно! Правильна відповідь: ${correctAnswer}`;
-      }
-
-      if (attempt < maxAttempts) {
-        attempt++;
-        setTimeout(playLevel, 1500);
-      } else if (level < maxLevel) {
-        level++;
-        attempt = 1;
-        setTimeout(playLevel, 1500);
-      } else {
-        finishGame();
-      }
-    }
-
-    function finishGame() {
-      document.getElementById("number").innerText = "";
-      document.getElementById("answer").classList.add("hidden");
-      document.getElementById("submitBtn").classList.add("hidden");
-
-      const totalAttempts = maxLevel * maxAttempts;
-      const percent = Math.round((score / totalAttempts) * 100);
-
-      document.getElementById("result").innerText =
-        `🏁 Гру завершено! Результат: ${score}/${totalAttempts} (${percent}%)`;
-
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify({ name: playerName, score: `${score}/${totalAttempts} (${percent}%)` }),
-        headers: { "Content-Type": "application/json" }
-      }).catch(err => console.error("Помилка відправлення:", err));
-    }
-  </script>
+function showResults() {
+  document.getElementById("level").style.display = "none";
+  const accuracy = Math.round((score / totalAttempts) * 100);
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").innerHTML = `
+    <h2>Результати</h2>
+    <p>${username}, твоя точність: <strong>${accuracy}%</strong></p>
+    <p>Правильних відповідей: ${score} із ${totalAttempts}</p>
+  `;
+}
+</script>
 </body>
 </html>
