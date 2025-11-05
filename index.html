@@ -19,7 +19,7 @@
   #game {
     max-width: 500px;
     margin: auto;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.25);
     padding: 20px;
     border-radius: 20px;
   }
@@ -49,20 +49,35 @@
   }
 
   #number {
-    font-size: 48px;
+    font-size: 60px;
     font-weight: bold;
     margin: 20px 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+
+  .fade {
+    opacity: 0;
+    transform: scale(0.7);
   }
 
   @media (max-width: 600px) {
-    #number { font-size: 36px; }
+    #number { font-size: 42px; }
     input, button { font-size: 14px; }
   }
+
+  #feedback {
+    font-size: 20px;
+    margin-top: 10px;
+    min-height: 30px;
+  }
+
+  .correct { color: #00ffb3; }
+  .wrong { color: #ff8080; }
 </style>
 </head>
 <body>
   <div id="game">
-    <h1>Тест на пам’ять</h1>
+    <h1>🧠 Тест на пам’ять</h1>
     <div id="intro">
       <p>Введи своє ім’я:</p>
       <input type="text" id="username" placeholder="Твоє ім’я">
@@ -73,9 +88,10 @@
     <div id="level" style="display:none;">
       <h2 id="levelInfo"></h2>
       <div id="number"></div>
-      <input id="answer" type="text" placeholder="Введи цифри у зворотньому порядку" disabled>
+      <input id="answer" type="text" placeholder="Введи цифри у зворотному порядку" disabled>
       <br>
       <button id="submitBtn" disabled>Відповісти</button>
+      <div id="feedback"></div>
     </div>
 
     <div id="result" style="display:none;"></div>
@@ -106,7 +122,8 @@ function startGame() {
 }
 
 function startLevel() {
-  document.getElementById("levelInfo").textContent = 
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("levelInfo").textContent =
     `Рівень ${currentLevel} — спроба ${currentAttempt} із ${attemptsPerLevel}`;
   document.getElementById("answer").value = "";
   document.getElementById("answer").disabled = true;
@@ -124,36 +141,51 @@ function showSequence() {
   const numberDiv = document.getElementById("number");
 
   let i = 0;
-  numberDiv.textContent = "";
-  const interval = setInterval(() => {
+  const showNext = () => {
     if (i < sequence.length) {
+      numberDiv.classList.remove("fade");
       numberDiv.textContent = sequence[i];
       i++;
+      setTimeout(() => {
+        numberDiv.classList.add("fade");
+        setTimeout(showNext, 400);
+      }, 700);
     } else {
-      clearInterval(interval);
       numberDiv.textContent = "";
       document.getElementById("answer").disabled = false;
       document.getElementById("submitBtn").disabled = false;
       document.getElementById("answer").focus();
     }
-  }, 800);
+  };
+  showNext();
 }
 
 function checkAnswer() {
   const userAnswer = document.getElementById("answer").value.trim();
   const correctAnswer = currentNumber.split("").reverse().join("");
-  if (userAnswer === correctAnswer) score++;
+  const feedback = document.getElementById("feedback");
 
-  if (currentAttempt < attemptsPerLevel) {
-    currentAttempt++;
-    startLevel();
-  } else if (currentLevel < totalLevels) {
-    currentLevel++;
-    currentAttempt = 1;
-    startLevel();
+  if (userAnswer === correctAnswer) {
+    score++;
+    feedback.textContent = "✅ Правильно!";
+    feedback.className = "correct";
   } else {
-    showResults();
+    feedback.textContent = `❌ Неправильно. Правильна відповідь: ${correctAnswer}`;
+    feedback.className = "wrong";
   }
+
+  setTimeout(() => {
+    if (currentAttempt < attemptsPerLevel) {
+      currentAttempt++;
+      startLevel();
+    } else if (currentLevel < totalLevels) {
+      currentLevel++;
+      currentAttempt = 1;
+      startLevel();
+    } else {
+      showResults();
+    }
+  }, 1200);
 }
 
 function showResults() {
@@ -164,6 +196,7 @@ function showResults() {
     <h2>Результати</h2>
     <p>${username}, твоя точність: <strong>${accuracy}%</strong></p>
     <p>Правильних відповідей: ${score} із ${totalAttempts}</p>
+    <button onclick="location.reload()">🔁 Пройти ще раз</button>
   `;
 }
 </script>
