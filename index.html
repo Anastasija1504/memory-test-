@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тест на пам'ять</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #6e8efb, #a777e3);
+      color: white;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 10px;
+    }
+
+    h1 {
+      font-size: clamp(20px, 4vw, 40px);
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      font-size: clamp(16px, 3vw, 24px);
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      margin: 10px;
+      outline: none;
+    }
+
+    input {
+      width: clamp(150px, 60vw, 400px);
+    }
+
+    button {
+      background: #fff;
+      color: #6e8efb;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #6e8efb;
+      color: white;
+    }
+
+    #number {
+      font-size: clamp(40px, 10vw, 120px);
+      font-weight: bold;
+      margin: 20px;
+    }
+
+    #result {
+      font-size: clamp(16px, 2.5vw, 22px);
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Тест на пам’ять</h1>
+  <div id="setup">
+    <input type="text" id="playerName" placeholder="Введіть ваше ім’я" />
+    <button onclick="startGame()">Почати</button>
+  </div>
+
+  <div id="game" class="hidden">
+    <div id="number"></div>
+    <input type="text" id="answer" class="hidden" placeholder="Введіть цифри у зворотньому порядку" />
+    <button id="submitBtn" class="hidden" onclick="checkAnswer()">Перевірити</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxjlryvmhZq3VreJu3xTMbLgGUhWJq6gZQQtMtFQ2fvBFFk9eMTCGNppII3zO30SM7CZA/exec";
+    let playerName = "";
+    let score = 0;
+    let level = 1;
+    let currentSequence = [];
+    const maxLevel = 3;
+
+    function startGame() {
+      playerName = document.getElementById("playerName").value.trim();
+      if (!playerName) return alert("Будь ласка, введіть ім’я!");
+      document.getElementById("setup").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+      score = 0;
+      level = 1;
+      playLevel();
+    }
+
+    async function playLevel() {
+      document.getElementById("result").innerText = `Рівень ${level} із ${maxLevel}`;
+      const numCount = 3 + level; 
+      currentSequence = Array.from({ length: numCount }, () => Math.floor(Math.random() * 10));
+      const numberDiv = document.getElementById("number");
+      const answerInput = document.getElementById("answer");
+      const submitBtn = document.getElementById("submitBtn");
+
+      answerInput.classList.add("hidden");
+      submitBtn.classList.add("hidden");
+      answerInput.value = "";
+
+      for (let i = 0; i < currentSequence.length; i++) {
+        numberDiv.innerText = currentSequence[i];
+        await new Promise(r => setTimeout(r, 1000)); 
+        numberDiv.innerText = "";
+        await new Promise(r => setTimeout(r, 300)); 
+      }
+
+      answerInput.classList.remove("hidden");
+      submitBtn.classList.remove("hidden");
+      answerInput.focus();
+    }
+
+    function checkAnswer() {
+      const userAnswer = document.getElementById("answer").value.trim();
+      const correctAnswer = currentSequence.slice().reverse().join("");
+      const resultDiv = document.getElementById("result");
+
+      if (userAnswer === correctAnswer) {
+        score++;
+        resultDiv.innerText = `✅ Правильно! Рахунок: ${score}`;
+      } else {
+        resultDiv.innerText = `❌ Неправильно! Правильна відповідь: ${correctAnswer}`;
+      }
+
+      level++;
+      if (level <= maxLevel) {
+        setTimeout(playLevel, 1500);
+      } else {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      document.getElementById("number").innerText = "";
+      document.getElementById("answer").classList.add("hidden");
+      document.getElementById("submitBtn").classList.add("hidden");
+      document.getElementById("result").innerText = `🏁 Гру завершено! Ваш рахунок: ${score}/${maxLevel}`;
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify({ name: playerName, score: score }),
+        headers: { "Content-Type": "application/json" }
+      }).catch(err => console.error("Помилка відправлення:", err));
+    }
+  </script>
+</body>
+</html>
