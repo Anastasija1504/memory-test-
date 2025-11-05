@@ -50,7 +50,7 @@
     opacity: 0;
   }
   .flash {
-    animation: flashEffect 0.5s ease-in-out;
+    animation: flashEffect 0.4s ease-in-out;
   }
   @keyframes flashEffect {
     0% { opacity: 0; transform: scale(0.5); color: #fff; text-shadow: 0 0 15px #fff; }
@@ -115,7 +115,7 @@ function startGame() {
   startLevel();
 }
 
-function startLevel() {
+async function startLevel() {
   document.getElementById("feedback").textContent = "";
   document.getElementById("levelInfo").textContent =
     `Рівень ${currentLevel} — спроба ${currentAttempt} із ${attemptsPerLevel}`;
@@ -124,18 +124,12 @@ function startLevel() {
   document.getElementById("submitBtn").disabled = true;
 
   currentNumber = generateNumber(currentLevel + 2);
-  const numberEl = document.getElementById("number");
-  numberEl.textContent = currentNumber;
-  numberEl.classList.add("flash");
-  numberEl.style.opacity = 1;
+  await showNumbersSequentially(currentNumber);
 
-  setTimeout(() => {
-    numberEl.style.opacity = 0;
-    numberEl.classList.remove("flash");
-    document.getElementById("answer").disabled = false;
-    document.getElementById("submitBtn").disabled = false;
-    document.getElementById("answer").focus();
-  }, 1500);
+  // після показу всіх цифр — дозволяємо вводити
+  document.getElementById("answer").disabled = false;
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("answer").focus();
 }
 
 function generateNumber(length) {
@@ -144,6 +138,29 @@ function generateNumber(length) {
     num += Math.floor(Math.random() * 10);
   }
   return num;
+}
+
+function showNumbersSequentially(numberString) {
+  const numberEl = document.getElementById("number");
+  return new Promise((resolve) => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= numberString.length) {
+        clearInterval(interval);
+        numberEl.style.opacity = 0;
+        resolve();
+        return;
+      }
+      numberEl.textContent = numberString[i];
+      numberEl.classList.add("flash");
+      numberEl.style.opacity = 1;
+      setTimeout(() => {
+        numberEl.style.opacity = 0;
+        numberEl.classList.remove("flash");
+      }, 600);
+      i++;
+    }, 1000);
+  });
 }
 
 function checkAnswer() {
@@ -167,7 +184,7 @@ function checkAnswer() {
   }
 
   if (currentLevel > totalLevels) {
-    endGame();
+    setTimeout(endGame, 1500);
   } else {
     setTimeout(startLevel, 1500);
   }
