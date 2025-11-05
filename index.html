@@ -115,6 +115,7 @@
     let correctCount = 0;
     const maxLevels = 5;
     const attemptsPerLevel = 3;
+    const totalAttempts = maxLevels * attemptsPerLevel;
 
     async function showSequence() {
       if (currentLevel > maxLevels) {
@@ -155,9 +156,6 @@
         status.style.color = "red";
       }
 
-      const totalAttempts = maxLevels * attemptsPerLevel;
-      const progress = ((correctCount / totalAttempts) * 100).toFixed(1);
-
       attempt++;
 
       if (attempt > attemptsPerLevel) {
@@ -166,38 +164,34 @@
       }
 
       if (currentLevel > maxLevels) {
-        setTimeout(() => endGame(progress), 1200);
+        setTimeout(() => endGame(), 1200);
         return;
       }
 
-      status.textContent += `  Рівень ${currentLevel}/5 — Точність: ${progress}%`;
+      status.textContent += `  (${correctCount} з ${totalAttempts} правильних)`;
       answerInput.value = "";
 
       setTimeout(showSequence, 1500);
     }
 
-    function endGame(progress) {
-      const total = maxLevels * attemptsPerLevel;
-      const finalScore = progress !== undefined ? progress : ((correctCount / total) * 100).toFixed(1);
-
+    function endGame() {
       display.innerHTML = "✅<br><span style='font-size:1.5em;'>Тест завершено!</span>";
       answerInput.disabled = true;
       submitBtn.disabled = true;
-      gameControls.style.display = "none"; // 🔹 Ховаємо поле вводу після завершення
+      gameControls.style.display = "none";
       status.style.color = "red";
-      status.textContent = `Результат: ${finalScore}% правильних відповідей`;
+      status.textContent = `Результат: ${correctCount} з ${totalAttempts} правильних відповідей`;
 
-      // Якщо результат 0 — все одно надсилаємо
-      sendResult(nameInput.value, finalScore);
+      sendResult(nameInput.value, correctCount);
     }
 
-    function sendResult(name, progress) {
-      const fixedProgress = isNaN(progress) ? 0 : progress;
+    function sendResult(name, correctCount) {
+      const safeCount = isNaN(correctCount) ? 0 : correctCount;
       fetch(scriptURL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, progress: fixedProgress })
+        body: JSON.stringify({ name, correct: safeCount })
       }).catch(err => console.error("Помилка запису:", err));
     }
 
